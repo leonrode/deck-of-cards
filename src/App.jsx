@@ -80,7 +80,7 @@ export default function DeckWorkout() {
   };
   if (isComplete) {
     return (
-      <div className="w-screen h-screen flex flex-col items-center justify-center bg-neutral-900 text-white overflow-hidden">
+      <div className="w-screen h-screen flex flex-col items-center justify-center bg-[#171717] text-white overflow-hidden">
         <h1 className="text-4xl font-light tracking-widest uppercase mb-6 text-[#e0e0e0]">Session Complete</h1>
         <div className="w-16 h-[1px] bg-neutral-700 mb-8"></div>
         <button 
@@ -98,7 +98,7 @@ export default function DeckWorkout() {
       
       <button 
         onClick={() => setSettingsOpen(true)}
-        className="absolute top-6 right-6 z-[60] p-2 text-neutral-400 hover:text-white transition-colors"
+        className="absolute top-6 right-6 z-[60] p-2 text-neutral-400 hover:text-white transition-colors cursor-pointer duration-300"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -131,7 +131,7 @@ export default function DeckWorkout() {
                 type="text" 
                 value={exercises[suit]} 
                 onChange={(e) => setExercises({ ...exercises, [suit]: e.target.value })}
-                className="bg-neutral-800 text-white border border-neutral-700 rounded-md p-3 outline-none focus:border-neutral-500 transition-[border] duration-300 ease-out font-light tracking-wide"
+                className="bg-neutral-800 text-white border border-neutral-700 rounded-md p-3 outline-none focus:border-neutral-500 transition-[border] uppercase duration-300 ease-out font-light tracking-widest"
               />
             </div>
           ))}
@@ -139,7 +139,7 @@ export default function DeckWorkout() {
 
         <button 
           onClick={() => setSettingsOpen(false)}
-          className="mt-12 px-10 py-3 border border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-sm"
+          className="mt-12 px-10 py-3 border cursor-pointer border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-sm"
         >
           Save & Close
         </button>
@@ -162,7 +162,7 @@ export default function DeckWorkout() {
         <div 
           key={cardIndex}
           onClick={() => !isAnimatingOut && setIsRevealed(true)}
-          className={`absolute top-0 left-0 w-full h-full z-10 cursor-pointer transition-all duration-500 ease-out [transform-style:preserve-3d] ${
+          className={`absolute top-0 left-0 w-full h-full z-10 cursor-pointer transition-all duration-500 ease-out ${!isRevealed || isAnimatingOut ? "hover:-translate-y-[10px]" : ""} [transform-style:preserve-3d] ${
             isAnimatingOut
               ? '[transform:rotateY(180deg)_scale(1)_translate(150%,-3rem)_rotateZ(15deg)] opacity-0'
               : isRevealed 
@@ -186,11 +186,11 @@ export default function DeckWorkout() {
           {rankToNum(cards.current[cardIndex].rank)} {suitToExercise(cards.current[cardIndex].suit)}
         </p>
 
-        <button className="px-5 py-2 gap-2 flex items-center border border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-sm"
+        <button className="group cursor-pointer px-5 py-2 gap-2 flex items-center border border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-sm"
  onClick={handleNext}>
           next 
-          <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24" fill="none">
-            <path fillRule="evenodd" clipRule="evenodd" d="M12.2929 4.29289C12.6834 3.90237 13.3166 3.90237 13.7071 4.29289L20.7071 11.2929C21.0976 11.6834 21.0976 12.3166 20.7071 12.7071L13.7071 19.7071C13.3166 20.0976 12.6834 20.0976 12.2929 19.7071C11.9024 19.3166 11.9024 18.6834 12.2929 18.2929L17.5858 13H4C3.44772 13 3 12.5523 3 12C3 11.4477 3.44772 11 4 11H17.5858L12.2929 5.70711C11.9024 5.31658 11.9024 4.68342 12.2929 4.29289Z" fill="#ffffff"/>
+          <svg className="group-hover:fill-black fill-white transition-all duration-300 ease-out"  xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24" fill="none">
+            <path fillRule="evenodd" clipRule="evenodd" d="M12.2929 4.29289C12.6834 3.90237 13.3166 3.90237 13.7071 4.29289L20.7071 11.2929C21.0976 11.6834 21.0976 12.3166 20.7071 12.7071L13.7071 19.7071C13.3166 20.0976 12.6834 20.0976 12.2929 19.7071C11.9024 19.3166 11.9024 18.6834 12.2929 18.2929L17.5858 13H4C3.44772 13 3 12.5523 3 12C3 11.4477 3.44772 11 4 11H17.5858L12.2929 5.70711C11.9024 5.31658 11.9024 4.68342 12.2929 4.29289Z" />
           </svg>
         </button>
 
