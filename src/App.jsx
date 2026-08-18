@@ -50,19 +50,7 @@ const clusteringIndex = (repsList) => {
   score = Math.max(0, Math.min(100, score));
   return Math.round(score * 100) / 100;
 };
-const rankToNum = (rank) => {
-  if (Number.isInteger(Number(rank))) {
-    return Number(rank);
-  }
-  else {
-    return {
-      "J": 11,
-      "Q": 12,
-      "K": 13,
-      "A": 14
-    }[rank];
-  }
-}
+
 
 export default function DeckWorkout() {
   const cards = useRef(generateInitialDeck());
@@ -87,6 +75,20 @@ export default function DeckWorkout() {
     diamonds: 'seconds plank'
   });
 
+
+  const rankToNum = (rank) => {
+    if (Number.isInteger(Number(rank))) {
+      return Number(rank);
+    }
+    else {
+      return {
+        "J": 11,
+        "Q": 12,
+        "K": 13,
+        "A": aceValue
+      }[rank];
+    }
+  }
 
   
   const suitToExercise = (suit) => {
@@ -145,23 +147,33 @@ export default function DeckWorkout() {
     lastRevealTime.current = null;
 
   };
-  if (isComplete) {
-    return (
-      <div className="w-screen h-screen flex flex-col items-center justify-center bg-[#171717] text-white overflow-hidden">
-        <h1 className="text-4xl font-light tracking-widest uppercase mb-6 text-[#e0e0e0]">Session Complete</h1>
-        <div className="w-16 h-[1px] bg-neutral-700 mb-8"></div>
+  // if (isComplete) {
+  //   return (
+      
+  //   );
+  // }
+
+  return (
+    <div className="w-screen h-screen overflow-hidden flex flex-col items-center justify-center bg-neutral-900 relative">
+
+      {isComplete && !statsOpen ? <div className="w-screen h-screen p-8 flex flex-col items-center justify-center bg-[#171717] text-white overflow-hidden">
+        <h1 className="text-4xl font-light text-center tracking-widest uppercase mb-6 text-[#e0e0e0]">Session Complete</h1>
+        <button 
+          onClick={() => setStatsOpen(true)}
+          className="px-8 py-3 border border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-sm"
+        >
+          View your session statistics
+        </button>
+        <div className="w-16 h-[1px] bg-neutral-700 my-8"></div>
         <button 
           onClick={handleRestart}
           className="px-8 py-3 border border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-sm"
         >
           Restart
         </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-screen h-screen overflow-hidden flex flex-col items-center justify-center bg-neutral-900 relative">
+      </div> : <>
+      
+      
       
       <button
       className="absolute top-6 left-6 z-[60] p-2 text-neutral-400 hover:text-white transition-colors cursor-pointer duration-300"
@@ -301,7 +313,7 @@ export default function DeckWorkout() {
               />
             </LineChart>}
             {
-              expandedStat === "clusteringIndex" && <LineChart
+              expandedStat === "difficultyIndex" && <LineChart
               style={{ fontFamily: "monospace", fontWeight: "300" }}
               data={reps.map((x, i) => ({
                 ind: i, 
@@ -389,7 +401,7 @@ export default function DeckWorkout() {
         </button>
       </div>
 
-      <div className="absolute mx-4 flex gap-4 top-[10%] z-20">
+      {!statsOpen && <><div className="absolute mx-4 flex gap-4 top-[10%] z-20">
         <button 
           onClick={handleRestart}
           className="group flex items-center gap-2 px-6 py-2 border border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-xs cursor-pointer"
@@ -458,7 +470,8 @@ export default function DeckWorkout() {
         </button>
 
         <span className="text-white font-light opacity-50 tracking-widest">{cardIndex + 1} / {deckLength}</span>
-      </div>
+      </div></>}
+      </>}
     </div>
   );
 }
