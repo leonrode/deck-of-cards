@@ -9,7 +9,7 @@ import { generateCardSvg, generateCardBackSvg } from './makecard';
 export default function DeckWorkout() {
   const [isRevealed, setIsRevealed] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
+  const [cardIndex, setCardIndex] = useState(0);
   const generateCards = () => {
 
     return SUITS.flatMap(suit => 
@@ -31,8 +31,10 @@ export default function DeckWorkout() {
 
   const cards = useRef(shuffle(generateCards()));
 
-  const [cardIndex, setCardIndex] = useState(50);
-
+  
+  const deckLength = cards.current.length;
+  const isComplete = cardIndex >= deckLength;
+  
   const handleNext = () => {
     if (isAnimatingOut) return;
     
@@ -44,21 +46,42 @@ export default function DeckWorkout() {
       setCardIndex(prev => prev + 1);
     }, 500); 
   };
+
+  const handleRestart = () => {
+    setCardIndex(0);
+    setIsRevealed(false);
+    setIsAnimatingOut(false);
+  };
+  if (isComplete) {
+    return (
+      <div className="w-screen h-screen flex flex-col items-center justify-center bg-neutral-900 text-white overflow-hidden">
+        <h1 className="text-4xl font-light tracking-widest uppercase mb-6 text-[#e0e0e0]">Session Complete</h1>
+        <div className="w-16 h-[1px] bg-neutral-700 mb-8"></div>
+        <button 
+          onClick={handleRestart}
+          className="px-8 py-3 border border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-sm"
+        >
+          Restart
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="w-screen h-screen overflow-hidden flex flex-col items-center justify-center bg-neutral-900">
       
       <div className="relative flex items-center justify-center w-[288px] h-[403px] mx-auto [perspective:1000px]">
         
         {/* Layer 0: Static stack base for depth */}
-        {cardIndex < 50 && (
+        {cardIndex < deckLength - 2 && (
           <div className="absolute top-[14px] left-[14px] w-full h-full shadow-md z-0 pointer-events-none [transform:scale(0.8333)]">
             {generateCardBackSvg()}
           </div>
         )}
 
         {/* Layer 1: Matches the shadow-xl of the resting top card */}
-        {cardIndex < 51 && (
-          <div className="absolute top-0 left-0 w-full h-full shadow-2xl z-0 pointer-events-none [transform:scale(0.8333)]">
+        {cardIndex < deckLength - 1 && (
+          <div className="absolute top-0 left-0 w-full h-full shadow-xl z-0 pointer-events-none [transform:scale(0.8333)]">
             {generateCardBackSvg()}
           </div>
         )}
@@ -88,6 +111,7 @@ export default function DeckWorkout() {
 
       <div className={`absolute flex flex-col items-center gap-4 ${isRevealed && !isAnimatingOut ? 'bottom-[14.28%] opacity-100' : 'bottom-[12.5%] opacity-0 pointer-events-none'} transition-all duration-500 ease-out`}>
         <p className="sans-serif text-xl font-light text-white">
+          {/* Implement dynamic logic here mapping suit to exercise/reps */}
           30 pushups
         </p>
 
@@ -98,7 +122,7 @@ export default function DeckWorkout() {
           </svg>
         </button>
 
-        <span className="text-white">{cardIndex}</span>
+        <span className="text-white">{cardIndex + 1} / {deckLength}</span>
       </div>
     </div>
   );
