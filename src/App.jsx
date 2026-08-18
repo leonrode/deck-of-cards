@@ -25,7 +25,7 @@ export default function DeckWorkout() {
           onClick={() => setIsRevealed(!isRevealed)}
           className={`absolute top-0 left-0 w-full h-full z-10 cursor-pointer transition-all duration-700 ease-out [transform-style:preserve-3d] ${
             isRevealed 
-              ? '[transform:rotateY(180deg)_scale(1.5)] -translate-y-12 ' 
+              ? '[transform:rotateY(180deg)_scale(1.2)] -translate-y-12 ' 
               : '[transform:rotateY(0deg)_scale(1)] shadow-xl'
           }`}
         >
