@@ -143,7 +143,7 @@ export default function DeckWorkout() {
     setReps([]);
     setExercisesDone([]);
     lastRevealTime.current = null;
-    
+
   };
   if (isComplete) {
     return (
@@ -202,13 +202,13 @@ export default function DeckWorkout() {
             </div>
 
             <div className="flex flex-col items-center justify-center p-6 bg-neutral-800/40 border border-neutral-700/50 rounded-2xl"
-            onClick={() => setExpandedStat('clusteringIndex')}
+            onClick={() => setExpandedStat('difficultyIndex')}
             >
               <span className="text-4xl font-light text-white mb-2">
-                {/* Insert Cards/Min Variable */}
+
                 {clusteringIndex(reps)}
               </span>
-              <span className="text-[10px] tracking-widest uppercase text-neutral-400 text-center">Clustering Index</span>
+              <span className="text-[10px] tracking-widest uppercase text-neutral-400 text-center">Difficulty Index</span>
             </div>
 
             <div className="flex flex-col items-center justify-center p-6 bg-neutral-800/40 border border-neutral-700/50 rounded-2xl"
@@ -241,7 +241,7 @@ export default function DeckWorkout() {
         ) : (<>
           <h2 className="text-2xl font-light tracking-widest uppercase mb-6 text-white">
             {expandedStat === 'totalReps' && 'Cumulative Reps'}
-            {expandedStat === 'clusteringIndex' && 'Clustering Index'}
+            {expandedStat === 'difficultyIndex' && 'Difficulty Index'}
             {expandedStat === 'secPerCard' && 'Seconds Per Card'}
             {expandedStat === 'secActive' && 'Work Intensity'}
           </h2>
@@ -249,7 +249,7 @@ export default function DeckWorkout() {
           <p className="text-sm font-light tracking-widest text-neutral-400 text-center mb-6 ">
             {expandedStat === "totalReps" && "Track the total reps completed as you progress through the deck."}
             {expandedStat === "secPerCard" && "How many seconds are you spending per card?"}
-            {expandedStat === "clusteringIndex" && "See the reps for each card you did"}
+            {expandedStat === "difficultyIndex" && "How hard was this set of cards? A higher index value means more high-rep cards came your way quickly"}
           </p>
     
           <div className="w-[90%] max-w-md h-64 bg-neutral-800/40 border border-neutral-700/50 rounded-xl flex items-center justify-center mb-8">
