@@ -31,7 +31,7 @@ export function generateCardSvg(rank, suit) {
             y="0" 
             fill={strokeColor} 
             fontSize="28" 
-            fontWeight="300" 
+            fontWeight="200" 
             fontFamily="sans-serif" 
             textAnchor="middle"
           >

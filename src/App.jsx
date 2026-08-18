@@ -10,11 +10,37 @@ export default function DeckWorkout() {
   const [isRevealed, setIsRevealed] = useState(false);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
   const [cardIndex, setCardIndex] = useState(0);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [aceValue, setAceValue] = useState(14);
+  const [exercises, setExercises] = useState({
+    spades: 'push-ups',
+    hearts: 'sit-ups',
+    clubs: 'dips',
+    diamonds: 'seconds plank'
+  });
   const generateCards = () => {
 
     return SUITS.flatMap(suit => 
       RANKS.map(rank => ({ rank, suit }))
     );
+  }
+
+  const rankToNum = (rank) => {
+    if (Number.isInteger(Number(rank))) {
+      return Number(rank);
+    }
+    else {
+      return {
+        "J": 11,
+        "Q": 12,
+        "K": 13,
+        "A": 14
+      }[rank];
+    }
+  }
+  
+  const suitToExercise = (suit) => {
+    return exercises[suit]
   }
 
   const shuffle = (deck) => {
@@ -25,7 +51,7 @@ export default function DeckWorkout() {
       
       // Swap elements deck[i] and deck[j]
       [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
+    } 
     return deck;
   }
 
@@ -68,25 +94,71 @@ export default function DeckWorkout() {
   }
 
   return (
-    <div className="w-screen h-screen overflow-hidden flex flex-col items-center justify-center bg-neutral-900">
+    <div className="w-screen h-screen overflow-hidden flex flex-col items-center justify-center bg-neutral-900 relative">
       
+      <button 
+        onClick={() => setSettingsOpen(true)}
+        className="absolute top-6 right-6 z-[60] p-2 text-neutral-400 hover:text-white transition-colors"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+
+      <div className={`absolute inset-0 bg-neutral-900/95 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-all duration-300 ${settingsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        <h2 className="text-3xl font-light tracking-widest uppercase mb-10 text-white">Settings</h2>
+
+        <div className="flex flex-col gap-6 w-full max-w-xs">
+          <div className="flex flex-col gap-2">
+            <label className="text-neutral-400 text-sm tracking-widest uppercase">Ace Value</label>
+            <select 
+              value={aceValue} 
+              onChange={(e) => setAceValue(Number(e.target.value))}
+              className="bg-neutral-800 text-white border border-neutral-700 rounded-md p-3 outline-none focus:border-neutral-500 transition-[border] duration-300 ease-out appearance-none"
+            >
+              <option value={1}>1</option>
+              <option value={11}>11</option>
+              <option value={14}>14</option>
+            </select>
+          </div>
+
+          {Object.keys(exercises).map((suit) => (
+            <div key={suit} className="flex flex-col gap-2">
+              <label className="text-neutral-400 text-sm tracking-widest uppercase">{suit}</label>
+              <input 
+                type="text" 
+                value={exercises[suit]} 
+                onChange={(e) => setExercises({ ...exercises, [suit]: e.target.value })}
+                className="bg-neutral-800 text-white border border-neutral-700 rounded-md p-3 outline-none focus:border-neutral-500 transition-[border] duration-300 ease-out font-light tracking-wide"
+              />
+            </div>
+          ))}
+        </div>
+
+        <button 
+          onClick={() => setSettingsOpen(false)}
+          className="mt-12 px-10 py-3 border border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-sm"
+        >
+          Save & Close
+        </button>
+      </div>
+
       <div className="relative flex items-center justify-center w-[288px] h-[403px] mx-auto [perspective:1000px]">
         
-        {/* Layer 0: Static stack base for depth */}
         {cardIndex < deckLength - 2 && (
           <div className="absolute top-[14px] left-[14px] w-full h-full shadow-md z-0 pointer-events-none [transform:scale(0.8333)]">
             {generateCardBackSvg()}
           </div>
         )}
 
-        {/* Layer 1: Matches the shadow-xl of the resting top card */}
         {cardIndex < deckLength - 1 && (
           <div className="absolute top-0 left-0 w-full h-full shadow-xl z-0 pointer-events-none [transform:scale(0.8333)]">
             {generateCardBackSvg()}
           </div>
         )}
 
-        {/* Layer 2: The active top card */}
         <div 
           key={cardIndex}
           onClick={() => !isAnimatingOut && setIsRevealed(true)}
@@ -109,20 +181,20 @@ export default function DeckWorkout() {
 
       </div>
 
-      <div className={`absolute flex flex-col items-center gap-4 ${isRevealed && !isAnimatingOut ? 'bottom-[14.28%] opacity-100' : 'bottom-[12.5%] opacity-0 pointer-events-none'} transition-all duration-500 ease-out`}>
-        <p className="sans-serif text-xl font-light text-white">
-          {/* Implement dynamic logic here mapping suit to exercise/reps */}
-          30 pushups
+      <div className={`absolute flex flex-col items-center gap-4 ${isRevealed && !isAnimatingOut ? 'bottom-[10%] opacity-100' : 'bottom-[5%] opacity-0 pointer-events-none'} transition-all duration-500 ease-out`}>
+        <p className="sans-serif text-xl font-bold text-white uppercase tracking-widest">
+          {rankToNum(cards.current[cardIndex].rank)} {suitToExercise(cards.current[cardIndex].suit)}
         </p>
 
-        <button className="flex items-center text-white gap-2" onClick={handleNext}>
+        <button className="px-5 py-2 gap-2 flex items-center border border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-sm"
+ onClick={handleNext}>
           next 
           <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24" fill="none">
             <path fillRule="evenodd" clipRule="evenodd" d="M12.2929 4.29289C12.6834 3.90237 13.3166 3.90237 13.7071 4.29289L20.7071 11.2929C21.0976 11.6834 21.0976 12.3166 20.7071 12.7071L13.7071 19.7071C13.3166 20.0976 12.6834 20.0976 12.2929 19.7071C11.9024 19.3166 11.9024 18.6834 12.2929 18.2929L17.5858 13H4C3.44772 13 3 12.5523 3 12C3 11.4477 3.44772 11 4 11H17.5858L12.2929 5.70711C11.9024 5.31658 11.9024 4.68342 12.2929 4.29289Z" fill="#ffffff"/>
           </svg>
         </button>
 
-        <span className="text-white">{cardIndex + 1} / {deckLength}</span>
+        <span className="text-white font-light opacity-50 tracking-widest">{cardIndex + 1} / {deckLength}</span>
       </div>
     </div>
   );
