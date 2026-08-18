@@ -1,5 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import "./App.css"
 const SUITS = ['spades', 'hearts', 'diamonds', 'clubs'];
 const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
@@ -72,11 +73,13 @@ export default function DeckWorkout() {
   const [aceValue, setAceValue] = useState(14);
   const [updateTrigger, setUpdateTrigger] = useState(0);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [expandedStat, setExpandedStat] = useState(null);
 
   const lastRevealTime = useRef(null);
 
   const [activeTimes, setActiveTimes] = useState([]); // time between card reveal vs "next pressed"
   const [reps, setReps] = useState([]);
+  const [exercisesDone, setExercisesDone] = useState([]) // pushups vs situps, etc.
   const [exercises, setExercises] = useState({
     spades: 'push-ups',
     hearts: 'sit-ups',
@@ -106,11 +109,6 @@ export default function DeckWorkout() {
       lastRevealTime.current = now;
       return; // we track when the card is no longer revealed
     }
-
-    const diff = now - lastRevealTime.current;
-    console.log(diff);
-
-    setActiveTimes(prev => [...prev, diff]);
   }, [isRevealed])
   const deckLength = cards.current.length;
   const isComplete = cardIndex >= deckLength;
@@ -120,7 +118,13 @@ export default function DeckWorkout() {
 
     // add reps to total rep count
     setReps(prev => [...prev, rankToNum(cards.current[cardIndex].rank)])
-    
+
+
+    const now = Date.now();
+    const diff = now - lastRevealTime.current;
+
+    setActiveTimes(prev => [...prev, diff]);
+    setExercisesDone(prev => [...prev, exercises[cards.current[cardIndex].suit]])
     
     setIsAnimatingOut(true);
     
@@ -135,6 +139,11 @@ export default function DeckWorkout() {
     setCardIndex(0);
     setIsRevealed(false);
     setIsAnimatingOut(false);
+    setActiveTimes([]);
+    setReps([]);
+    setExercisesDone([]);
+    lastRevealTime.current = null;
+    
   };
   if (isComplete) {
     return (
@@ -176,50 +185,171 @@ export default function DeckWorkout() {
         </svg>
       </button>
 
-      <div className={`absolute inset-0 bg-neutral-900/95 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-all duration-300 ${statsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-        <h2 className="text-3xl font-light tracking-widest uppercase mb-10 text-white">Statistics</h2>
+      <div className={`absolute overflow-y-scroll inset-0 bg-neutral-900/95 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-all duration-300 ${statsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        {!expandedStat ? (
+          <>
+          <h2 className="text-3xl font-light tracking-widest uppercase mb-10 text-white">Statistics</h2>
 
-        <div className="grid grid-cols-2 gap-4 w-full max-w-sm px-6">
-          
-          <div className="flex flex-col items-center justify-center p-6 bg-neutral-800/40 border border-neutral-700/50 rounded-2xl">
-            <span className="text-4xl font-light text-white mb-2">
-              {reps.length == 0 ? 0 : reps.reduce((a, b) => a + b)}
-            </span>
-            <span className="text-[10px] tracking-widest uppercase text-neutral-400 text-center">Total Reps</span>
+          <div className="grid grid-cols-2 gap-4 w-full max-w-sm px-6">
+            
+            <div className="flex flex-col items-center justify-center p-6 bg-neutral-800/40 border border-neutral-700/50 rounded-2xl"
+            onClick={() => setExpandedStat('totalReps')}
+            >
+              <span className="text-4xl font-light text-white mb-2">
+                {reps.length == 0 ? 0 : reps.reduce((a, b) => a + b)}
+              </span>
+              <span className="text-[10px] tracking-widest uppercase text-neutral-400 text-center">Total Reps</span>
+            </div>
+
+            <div className="flex flex-col items-center justify-center p-6 bg-neutral-800/40 border border-neutral-700/50 rounded-2xl"
+            onClick={() => setExpandedStat('clusteringIndex')}
+            >
+              <span className="text-4xl font-light text-white mb-2">
+                {/* Insert Cards/Min Variable */}
+                {clusteringIndex(reps)}
+              </span>
+              <span className="text-[10px] tracking-widest uppercase text-neutral-400 text-center">Clustering Index</span>
+            </div>
+
+            <div className="flex flex-col items-center justify-center p-6 bg-neutral-800/40 border border-neutral-700/50 rounded-2xl"
+            onClick={() => setExpandedStat('secPerCard')}
+            >
+              <span className="text-4xl font-light text-white mb-2">
+                {activeTimes.length == 0 ? "-" : ((activeTimes.reduce((a, b) => a + b) / activeTimes.length) / 1000).toFixed(2)}
+              </span>
+              <span className="text-[10px] tracking-widest uppercase text-neutral-400 text-center">sec / card</span>
+            </div>
+
+            <div className="flex flex-col items-center justify-center p-6 bg-neutral-800/40 border border-neutral-700/50 rounded-2xl"
+            
+            >
+              <span className="text-4xl font-light text-white mb-2">
+                {activeTimes.length == 0 ? "-" : (activeTimes.reduce((a, b) => a + b) / 1000).toFixed(2)}
+              </span>
+              <span className="text-[10px] tracking-widest uppercase text-neutral-400 text-center">sec active</span>
+            </div>
+
           </div>
 
-          <div className="flex flex-col items-center justify-center p-6 bg-neutral-800/40 border border-neutral-700/50 rounded-2xl">
-            <span className="text-4xl font-light text-white mb-2">
-              {/* Insert Cards/Min Variable */}
-              {clusteringIndex(reps)}
-            </span>
-            <span className="text-[10px] tracking-widest uppercase text-neutral-400 text-center">Clustering Index</span>
+          <button 
+            onClick={() => setStatsOpen(false)}
+            className="mt-12 px-10 py-3 border cursor-pointer border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-sm"
+          >
+            Close
+          </button>
+        </>
+        ) : (<>
+          <h2 className="text-2xl font-light tracking-widest uppercase mb-6 text-white">
+            {expandedStat === 'totalReps' && 'Cumulative Reps'}
+            {expandedStat === 'clusteringIndex' && 'Clustering Index'}
+            {expandedStat === 'secPerCard' && 'Seconds Per Card'}
+            {expandedStat === 'secActive' && 'Work Intensity'}
+          </h2>
+
+          <p className="text-sm font-light tracking-widest text-neutral-400 text-center mb-6 ">
+            {expandedStat === "totalReps" && "Track the total reps completed as you progress through the deck."}
+            {expandedStat === "secPerCard" && "How many seconds are you spending per card?"}
+            {expandedStat === "clusteringIndex" && "See the reps for each card you did"}
+          </p>
+    
+          <div className="w-[90%] max-w-md h-64 bg-neutral-800/40 border border-neutral-700/50 rounded-xl flex items-center justify-center mb-8">
+          <ResponsiveContainer width="100%" height="100%">
+            {expandedStat === "totalReps" && <LineChart
+              style={{ fontFamily: "monospace", fontWeight: "300" }}
+              data={reps.map((x, i) => ({
+                ind: i, 
+                val: reps.slice(0, i + 1).reduce((a, b) => a + b)
+              }))}
+              margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
+            >
+              <XAxis 
+                dataKey="ind" 
+                stroke="#737373" 
+                tick={false} 
+                label={{ value: `${activeTimes.length} Cards Completed`, position: "insideBottom", fill: "#737373", offset: 0 }} 
+              />
+              <YAxis stroke="#737373" tick={true} width={20}/>
+              <Line
+                type="linear"
+                dataKey="val"
+                stroke="red"
+                dot={{ fill: 'red' }}
+                isAnimationActive={false}
+              />
+            </LineChart>}
+            {expandedStat === "secPerCard" && <LineChart
+              style={{ fontFamily: "monospace", fontWeight: "300" }}
+              data={activeTimes.map((x, i) => ({
+                ind: i, 
+                val: x / 1000
+              }))}
+              margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
+            >
+              <XAxis 
+                dataKey="ind" 
+                stroke="#737373" 
+                tick={false} 
+                label={{ value: `${activeTimes.length} Cards Completed`, position: "insideBottom", fill: "#737373", offset: 0 }} 
+              />
+              <YAxis stroke="#737373" tick={true} width={20} />
+              <Line
+                type="linear"
+                dataKey="val"
+                stroke="red"
+                dot={{ fill: 'red' }}
+                isAnimationActive={false}
+              />
+            </LineChart>}
+            {
+              expandedStat === "clusteringIndex" && <LineChart
+              style={{ fontFamily: "monospace", fontWeight: "300" }}
+              data={reps.map((x, i) => ({
+                ind: i, 
+                val: x
+              }))}
+              margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
+            >
+              <XAxis 
+                dataKey="ind" 
+                stroke="#737373" 
+                tick={false} 
+                label={{ value: `${activeTimes.length} Cards Completed`, position: "insideBottom", fill: "#737373", offset: 0 }} 
+              />
+              <YAxis stroke="#737373" tick={true} width={20} />
+              <Line
+                type="linear"
+                dataKey="val"
+                stroke="red"
+                dot={{ fill: 'red' }}
+                isAnimationActive={false}
+              />
+            </LineChart>}
+          </ResponsiveContainer>
           </div>
+          {expandedStat === "totalReps" && (
+            <div className="w-full max-w-sm flex flex-col gap-3 mt-4 px-6 mb-8">
+              {Object.entries(
+                exercisesDone.reduce((acc, exercise, i) => {
+                  acc[exercise] = (acc[exercise] || 0) + reps[i];
+                  return acc;
+                }, {})
+              ).map(([exerciseName, totalReps]) => (
+                <div key={exerciseName} className="flex justify-between items-center bg-neutral-800/40 border border-neutral-700/50 p-4 rounded-xl">
+                  <span className="text-neutral-400 text-xs tracking-widest uppercase">{exerciseName}</span>
+                  <span className="text-white text-xl font-light">{totalReps}</span>
+                </div>
+              ))}
+            </div>
+          )}
+    
+          <button 
+            onClick={() => setExpandedStat(null)}
+            className="px-10 py-3 border cursor-pointer border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-sm"
+          >
+            Back
+          </button>
+        </>)}
 
-          <div className="flex flex-col items-center justify-center p-6 bg-neutral-800/40 border border-neutral-700/50 rounded-2xl">
-            <span className="text-4xl font-light text-white mb-2">
-              {/* Insert Avg Time Variable */}
-              {activeTimes.length == 0 ? "-" : (activeTimes.reduce((a, b) => a + (b / 1000)) / activeTimes.length).toFixed(2)}
-            </span>
-            <span className="text-[10px] tracking-widest uppercase text-neutral-400 text-center">sec / card</span>
-          </div>
-
-          <div className="flex flex-col items-center justify-center p-6 bg-neutral-800/40 border border-neutral-700/50 rounded-2xl">
-            <span className="text-4xl font-light text-white mb-2">
-              {/* Insert Active Time Variable */}
-              {activeTimes.length == 0 ? "-" : (activeTimes.reduce((a, b) => a + (b / 1000))).toFixed(2)}
-            </span>
-            <span className="text-[10px] tracking-widest uppercase text-neutral-400 text-center">sec active</span>
-          </div>
-
-        </div>
-
-        <button 
-          onClick={() => setStatsOpen(false)}
-          className="mt-12 px-10 py-3 border cursor-pointer border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-sm"
-        >
-          Close
-        </button>
       </div>
       <div className={`absolute inset-0 bg-neutral-900/95 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-all duration-300 ${settingsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <h2 className="text-3xl font-light tracking-widest uppercase mb-10 text-white">Settings</h2>
