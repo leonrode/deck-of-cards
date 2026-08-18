@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import "./App.css"
 const SUITS = ['spades', 'hearts', 'diamonds', 'clubs'];
 const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
@@ -7,12 +7,10 @@ const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
 import { generateCardSvg, generateCardBackSvg } from './makecard';
 
 const generateInitialDeck = () => {
-  const suits = ['spades', 'hearts', 'diamonds', 'clubs'];
-  const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
   const deck = [];
   
-  for (const suit of suits) {
-    for (const rank of ranks) {
+  for (const suit of SUITS) {
+    for (const rank of RANKS) {
       deck.push({ rank, suit });
     }
   }
@@ -25,6 +23,46 @@ const generateInitialDeck = () => {
   return deck;
 };
 
+const clusteringIndex = (repsList) => {
+  const positions = [];
+  for (let i = 0; i < repsList.length; i++) {
+    if (repsList[i] >= 10 && repsList[i] <= 14) {
+      positions.push(i);
+    }
+  }
+  if (positions.length < 2) {
+    return 0;
+  }
+
+  let totalGap = 0;
+  for (let i = 0; i < positions.length - 1; i++) {
+    totalGap += (positions[i + 1] - positions[i]);
+  }
+  const averageGap = totalGap / (positions.length - 1);
+
+  const minGap = 1.0;
+  const maxGap = 51 / (positions.length - 1); 
+
+
+  let score = (1 - (averageGap - minGap) / (maxGap - minGap)) * 100;
+
+  score = Math.max(0, Math.min(100, score));
+  return Math.round(score * 100) / 100;
+};
+const rankToNum = (rank) => {
+  if (Number.isInteger(Number(rank))) {
+    return Number(rank);
+  }
+  else {
+    return {
+      "J": 11,
+      "Q": 12,
+      "K": 13,
+      "A": 14
+    }[rank];
+  }
+}
+
 export default function DeckWorkout() {
   const cards = useRef(generateInitialDeck());
   const [isRevealed, setIsRevealed] = useState(false);
@@ -33,32 +71,20 @@ export default function DeckWorkout() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [aceValue, setAceValue] = useState(14);
   const [updateTrigger, setUpdateTrigger] = useState(0);
+  const [statsOpen, setStatsOpen] = useState(false);
+
+  const lastRevealTime = useRef(null);
+
+  const [activeTimes, setActiveTimes] = useState([]); // time between card reveal vs "next pressed"
+  const [reps, setReps] = useState([]);
   const [exercises, setExercises] = useState({
     spades: 'push-ups',
     hearts: 'sit-ups',
     clubs: 'dips',
     diamonds: 'seconds plank'
   });
-  const generateCards = () => {
 
-    return SUITS.flatMap(suit => 
-      RANKS.map(rank => ({ rank, suit }))
-    );
-  }
 
-  const rankToNum = (rank) => {
-    if (Number.isInteger(Number(rank))) {
-      return Number(rank);
-    }
-    else {
-      return {
-        "J": 11,
-        "Q": 12,
-        "K": 13,
-        "A": 14
-      }[rank];
-    }
-  }
   
   const suitToExercise = (suit) => {
     return exercises[suit]
@@ -74,14 +100,27 @@ export default function DeckWorkout() {
     setUpdateTrigger(prev => prev + 1);
   };
 
-  // const cards = useRef(shuffle(generateCards()));
+  useEffect(() => {
+    const now = Date.now();
+    if (isRevealed || !lastRevealTime.current) {
+      lastRevealTime.current = now;
+      return; // we track when the card is no longer revealed
+    }
 
-  
+    const diff = now - lastRevealTime.current;
+    console.log(diff);
+
+    setActiveTimes(prev => [...prev, diff]);
+  }, [isRevealed])
   const deckLength = cards.current.length;
   const isComplete = cardIndex >= deckLength;
   
   const handleNext = () => {
     if (isAnimatingOut) return;
+
+    // add reps to total rep count
+    setReps(prev => [...prev, rankToNum(cards.current[cardIndex].rank)])
+    
     
     setIsAnimatingOut(true);
     
@@ -115,6 +154,17 @@ export default function DeckWorkout() {
   return (
     <div className="w-screen h-screen overflow-hidden flex flex-col items-center justify-center bg-neutral-900 relative">
       
+      <button
+      className="absolute top-6 left-6 z-[60] p-2 text-neutral-400 hover:text-white transition-colors cursor-pointer duration-300"
+      onClick={() => setStatsOpen(true)}
+      >
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="3" y1="2" x2="3" y2="18"></line>
+          <line x1="9" y1="9" x2="9" y2="18"></line>
+          <line x1="15" y1="6" x2="15" y2="18"></line>
+              
+    </svg>
+      </button>
       <button 
         onClick={() => setSettingsOpen(true)}
         className="absolute top-6 right-6 z-[60] p-2 text-neutral-400 hover:text-white transition-colors cursor-pointer duration-300"
@@ -126,6 +176,51 @@ export default function DeckWorkout() {
         </svg>
       </button>
 
+      <div className={`absolute inset-0 bg-neutral-900/95 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-all duration-300 ${statsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+        <h2 className="text-3xl font-light tracking-widest uppercase mb-10 text-white">Statistics</h2>
+
+        <div className="grid grid-cols-2 gap-4 w-full max-w-sm px-6">
+          
+          <div className="flex flex-col items-center justify-center p-6 bg-neutral-800/40 border border-neutral-700/50 rounded-2xl">
+            <span className="text-4xl font-light text-white mb-2">
+              {reps.length == 0 ? 0 : reps.reduce((a, b) => a + b)}
+            </span>
+            <span className="text-[10px] tracking-widest uppercase text-neutral-400 text-center">Total Reps</span>
+          </div>
+
+          <div className="flex flex-col items-center justify-center p-6 bg-neutral-800/40 border border-neutral-700/50 rounded-2xl">
+            <span className="text-4xl font-light text-white mb-2">
+              {/* Insert Cards/Min Variable */}
+              {clusteringIndex(reps)}
+            </span>
+            <span className="text-[10px] tracking-widest uppercase text-neutral-400 text-center">Clustering Index</span>
+          </div>
+
+          <div className="flex flex-col items-center justify-center p-6 bg-neutral-800/40 border border-neutral-700/50 rounded-2xl">
+            <span className="text-4xl font-light text-white mb-2">
+              {/* Insert Avg Time Variable */}
+              {activeTimes.length == 0 ? "-" : (activeTimes.reduce((a, b) => a + (b / 1000)) / activeTimes.length).toFixed(2)}
+            </span>
+            <span className="text-[10px] tracking-widest uppercase text-neutral-400 text-center">sec / card</span>
+          </div>
+
+          <div className="flex flex-col items-center justify-center p-6 bg-neutral-800/40 border border-neutral-700/50 rounded-2xl">
+            <span className="text-4xl font-light text-white mb-2">
+              {/* Insert Active Time Variable */}
+              {activeTimes.length == 0 ? "-" : (activeTimes.reduce((a, b) => a + (b / 1000))).toFixed(2)}
+            </span>
+            <span className="text-[10px] tracking-widest uppercase text-neutral-400 text-center">sec active</span>
+          </div>
+
+        </div>
+
+        <button 
+          onClick={() => setStatsOpen(false)}
+          className="mt-12 px-10 py-3 border cursor-pointer border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-sm"
+        >
+          Close
+        </button>
+      </div>
       <div className={`absolute inset-0 bg-neutral-900/95 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-all duration-300 ${settingsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <h2 className="text-3xl font-light tracking-widest uppercase mb-10 text-white">Settings</h2>
 
