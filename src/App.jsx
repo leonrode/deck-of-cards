@@ -208,7 +208,7 @@ export default function DeckWorkout() {
   };
 
   return (
-    <div className="w-screen h-screen overflow-x-hidden flex flex-col items-center justify-center bg-neutral-900 relative">
+    <div className="w-screen h-screen overflow-hidden  flex flex-col items-center justify-center bg-neutral-900 relative">
 
       {isComplete && !statsOpen ? <div className="w-screen h-screen p-8 flex flex-col items-center justify-center bg-[#171717] text-white overflow-hidden">
         <h1 className="text-4xl font-light text-center tracking-widest uppercase mb-6 text-[#e0e0e0]">Session Complete</h1>
@@ -251,7 +251,7 @@ export default function DeckWorkout() {
         </svg>
       </button>
 
-      <div className={`absolute overflow-y-scroll inset-0 bg-neutral-900/95 backdrop-blur-sm z-[100] flex flex-col items-center justify-center py-4 transition-all duration-300 ${statsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`absolute overflow-y-auto inset-0 bg-neutral-900/95 backdrop-blur-sm z-[100] flex flex-col items-center justify-center py-4 transition-all duration-300 ${statsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         {!expandedStat ? (
           <>
           <h2 className="text-3xl font-light tracking-widest uppercase mb-10 text-white">Statistics</h2>
