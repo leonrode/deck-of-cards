@@ -10,3 +10,7 @@ body {
 html {
   background-color: #171717;
 }
+
+svg {
+  outline: none;
+}

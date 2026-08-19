@@ -2,11 +2,33 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import "./App.css"
+import HoldButton from './HoldButton';
 const SUITS = ['spades', 'hearts', 'diamonds', 'clubs'];
 const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
 import { generateCardSvg, generateCardBackSvg } from './makecard';
-
+const suitIcons = {
+  spades: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+      <path d="M21.51 14.42c0 2.94-2.53 4.28-4.28 4.28-1.95 0-3.43-0.88-4.3-1.61 0.12 2.39 0.68 4.1 3.22 5.44h-8.29c2.54-1.34 3.1-3.05 3.22-5.44-0.88 0.72-2.35 1.61-4.3 1.61-1.75 0-4.28-1.35-4.28-4.28 0-5.37 3.78-3.91 9.51-12.96 5.73 9.05 9.51 7.6 9.51 12.96z"/>
+    </svg>
+  ),
+  hearts: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="#ef4444">
+      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+    </svg>
+  ),
+  diamonds: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="#ef4444">
+      <path d="M12 24 L6 12 L12 0 L18 12 Z"/>
+    </svg>
+  ),
+  clubs: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+      <path d="M22.38 13.835a4.896 4.896 0 0 1-9.481 1.719c-.004 3.222.203 5.365 3.26 6.984h-8.324c3.057-1.619 3.264-3.762 3.26-6.984a4.894 4.894 0 1 1-3.11-6.388 4.896 4.896 0 1 1 8.022 0 4.898 4.898 0 0 1 6.372 4.669z"/>
+    </svg>
+  )
+};
 const generateInitialDeck = () => {
   const deck = [];
   
@@ -208,9 +230,9 @@ export default function DeckWorkout() {
   };
 
   return (
-    <div className="w-screen h-screen overflow-hidden overflow-x-hidden flex flex-col items-center justify-center bg-neutral-900 relative">
+    <div className="w-screen h-[100dvh] overflow-hidden overflow-x-hidden flex flex-col items-center justify-center bg-neutral-900 relative">
 
-      {isComplete && !statsOpen ? <div className="w-screen h-screen p-8 flex flex-col items-center justify-center bg-[#171717] text-white overflow-hidden">
+      {isComplete && !statsOpen ? <div className="w-screen h-[100dvh] p-8 flex flex-col items-center justify-center bg-[#171717] text-white overflow-hidden">
         <h1 className="text-4xl font-light text-center tracking-widest uppercase mb-6 text-[#e0e0e0]">Session Complete</h1>
         <button 
           onClick={() => setStatsOpen(true)}
@@ -237,8 +259,8 @@ export default function DeckWorkout() {
           <line x1="3" y1="2" x2="3" y2="18"></line>
           <line x1="9" y1="9" x2="9" y2="18"></line>
           <line x1="15" y1="6" x2="15" y2="18"></line>
-              
-    </svg>
+
+      </svg>
       </button>
       <button 
         onClick={() => setSettingsOpen(true)}
@@ -327,7 +349,7 @@ export default function DeckWorkout() {
           </p>
     
           <div className="w-full max-w-md h-64 bg-neutral-800/40 border border-neutral-700/50 rounded-xl flex items-center justify-center mb-8">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" >
             {expandedStat === "totalReps" && <LineChart
             responsive
             
@@ -350,10 +372,10 @@ export default function DeckWorkout() {
                 dataKey="val"
                 stroke="red"
                 dot={{ fill: 'red' }}
+                activeDot={false}
                 isAnimationActive={true}
-                animationBegin={100}
-                animationDuration={1200}
-                animationEasing="ease-out"
+                animationDuration={400}
+                animationEasing="linear"
               />
             </LineChart>}
             {expandedStat === "secPerCard" && <LineChart
@@ -376,17 +398,19 @@ export default function DeckWorkout() {
                 type="linear"
                 dataKey="val"
                 stroke="red"
+                activeDot={false}
                 dot={{ fill: 'red' }}
                 isAnimationActive={true}
-                animationEasing="ease-out"
-                animationBegin={100}
-                animationDuration={1200}
+                animationDuration={400}
+                animationEasing="linear"
+
+
               />
             </LineChart>}
             {
               expandedStat === "difficultyIndex" && <LineChart
               responsive
-              style={{ fontFamily: "monospace", fontWeight: "300" }}
+              style={{ fontFamily: "monospace", fontWeight: "300", outline: "0" }}
               data={reps.map((x, i) => ({
                 ind: i, 
                 val: x
@@ -404,11 +428,12 @@ export default function DeckWorkout() {
                 type="linear"
                 dataKey="val"
                 stroke="red"
+                activeDot={false}
                 dot={{ fill: 'red' }}
                 isAnimationActive={true}
-                animationEasing="ease-out"
-                animationBegin={100}
-                animationDuration={1200}
+                animationDuration={400}
+                animationEasing="linear"
+
               />
             </LineChart>}
           </ResponsiveContainer>
@@ -448,26 +473,38 @@ export default function DeckWorkout() {
         <div className="flex flex-col gap-6 w-full max-w-xs">
           <div className="flex flex-col gap-2">
             <label className="text-neutral-400 text-sm tracking-widest uppercase">Ace Value</label>
-            <select 
-              value={aceValue} 
-              onChange={(e) => setAceValue(Number(e.target.value))}
-              className="bg-neutral-800 text-white border border-neutral-700 rounded-md p-3 outline-none focus:border-neutral-500 transition-[border] duration-300 ease-out appearance-none"
-            >
-              <option value={1}>1</option>
-              <option value={11}>11</option>
-              <option value={14}>14</option>
-            </select>
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                  <text x="50%" y="60%" dominantBaseline="middle" textAnchor="middle" fontSize="18" fontFamily="sans-serif" fontWeight="light">A</text>
+                </svg>
+              </div>
+              <select 
+                value={aceValue} 
+                onChange={(e) => setAceValue(Number(e.target.value))}
+                className="w-full bg-neutral-800 text-white border border-neutral-700 rounded-md py-3 pr-3 pl-10 outline-none focus:border-neutral-500 transition-[border] duration-300 ease-out appearance-none"
+              >
+                <option value={1}>1</option>
+                <option value={11}>11</option>
+                <option value={14}>14</option>
+              </select>
+            </div>
           </div>
 
           {Object.keys(exercises).map((suit) => (
             <div key={suit} className="flex flex-col gap-2">
               <label className="text-neutral-400 text-sm tracking-widest uppercase">{suit}</label>
-              <input 
-                type="text" 
-                value={exercises[suit]} 
-                onChange={(e) => setExercises({ ...exercises, [suit]: e.target.value })}
-                className="bg-neutral-800 text-white border border-neutral-700 rounded-md p-3 outline-none focus:border-neutral-500 transition-[border] uppercase duration-300 ease-out font-light tracking-widest"
-              />
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center justify-center">
+                  {suitIcons[suit]}
+                </div>
+                <input 
+                  type="text" 
+                  value={exercises[suit]} 
+                  onChange={(e) => setExercises({ ...exercises, [suit]: e.target.value })}
+                  className="w-full bg-neutral-800 text-white border border-neutral-700 rounded-md py-3 pr-3 pl-10 outline-none focus:border-neutral-500 transition-[border] uppercase duration-300 ease-out font-light tracking-widest"
+                />
+              </div>
             </div>
           ))}
         </div>
@@ -480,23 +517,26 @@ export default function DeckWorkout() {
         </button>
       </div>
 
-      {!statsOpen && <><div className="absolute mx-4 flex gap-4 top-[10%] z-20">
-        <button 
-          onClick={handleRestart}
-          className="group flex items-center gap-2 px-6 py-2 border border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-xs cursor-pointer"
+      {!statsOpen && <><div className="absolute justify-center flex gap-4 top-6 z-20">
+        <HoldButton 
+          onConfirm={handleRestart}
+          className="group px-4 py-2 border border-neutral-700 rounded-full hover:bg-white hover:border-white transition-colors duration-300 uppercase tracking-widest text-xs cursor-pointer"
         >
-          <svg className="group-hover:stroke-black stroke-white transition-all duration-300 ease-out" xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24" fill="none">
-<path d="M18.364 8.05026L17.6569 7.34315C14.5327 4.21896 9.46734 4.21896 6.34315 7.34315C3.21895 10.4673 3.21895 15.5327 6.34315 18.6569C9.46734 21.7811 14.5327 21.7811 17.6569 18.6569C19.4737 16.84 20.234 14.3668 19.9377 12.0005M18.364 8.05026H14.1213M18.364 8.05026V3.80762"  stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-</svg> Restart <span className="hidden md:inline">This Deck</span>
-        </button>
-        <button 
-          onClick={handleShuffleRemaining}
-          className="flex items-center gap-2 group px-6 py-2 border border-neutral-700 text-neutral-300 rounded-full hover:bg-white hover:text-black hover:border-white transition-all duration-300 uppercase tracking-widest text-xs cursor-pointer"
+          <svg className="transition-colors duration-300 ease-out" xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M18.364 8.05026L17.6569 7.34315C14.5327 4.21896 9.46734 4.21896 6.34315 7.34315C3.21895 10.4673 3.21895 15.5327 6.34315 18.6569C9.46734 21.7811 14.5327 21.7811 17.6569 18.6569C19.4737 16.84 20.234 14.3668 19.9377 12.0005M18.364 8.05026H14.1213M18.364 8.05026V3.80762" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg> 
+          <span>Restart <span className="hidden md:inline">This Deck</span></span>
+        </HoldButton>
+
+        <HoldButton 
+          onConfirm={handleShuffleRemaining}
+          className="group px-4 py-2 border border-neutral-700 rounded-full hover:bg-white hover:border-white transition-colors duration-300 uppercase tracking-widest text-xs cursor-pointer"
         >
-          <svg className="group-hover:fill-black fill-white transition-all duration-300 ease-out"  xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 24 24" fill="none">
-<path d="M16.4697 9.46967C16.1768 9.76256 16.1768 10.2374 16.4697 10.5303C16.7626 10.8232 17.2374 10.8232 17.5303 10.5303L16.4697 9.46967ZM19.5303 8.53033C19.8232 8.23744 19.8232 7.76256 19.5303 7.46967C19.2374 7.17678 18.7626 7.17678 18.4697 7.46967L19.5303 8.53033ZM18.4697 8.53033C18.7626 8.82322 19.2374 8.82322 19.5303 8.53033C19.8232 8.23744 19.8232 7.76256 19.5303 7.46967L18.4697 8.53033ZM17.5303 5.46967C17.2374 5.17678 16.7626 5.17678 16.4697 5.46967C16.1768 5.76256 16.1768 6.23744 16.4697 6.53033L17.5303 5.46967ZM19 8.75C19.4142 8.75 19.75 8.41421 19.75 8C19.75 7.58579 19.4142 7.25 19 7.25V8.75ZM16.7 8L16.6993 8.75H16.7V8ZM12.518 10.252L13.1446 10.6642L13.1446 10.6642L12.518 10.252ZM10.7414 11.5878C10.5138 11.9338 10.6097 12.3989 10.9558 12.6266C11.3018 12.8542 11.7669 12.7583 11.9946 12.4122L10.7414 11.5878ZM11.9946 12.4122C12.2222 12.0662 12.1263 11.6011 11.7802 11.3734C11.4342 11.1458 10.9691 11.2417 10.7414 11.5878L11.9946 12.4122ZM10.218 13.748L9.59144 13.3358L9.59143 13.3358L10.218 13.748ZM6.041 16V16.75H6.04102L6.041 16ZM5 15.25C4.58579 15.25 4.25 15.5858 4.25 16C4.25 16.4142 4.58579 16.75 5 16.75V15.25ZM11.9946 11.5878C11.7669 11.2417 11.3018 11.1458 10.9558 11.3734C10.6097 11.6011 10.5138 12.0662 10.7414 12.4122L11.9946 11.5878ZM12.518 13.748L13.1446 13.3358L13.1446 13.3358L12.518 13.748ZM16.7 16V15.25H16.6993L16.7 16ZM19 16.75C19.4142 16.75 19.75 16.4142 19.75 16C19.75 15.5858 19.4142 15.25 19 15.25V16.75ZM10.7414 12.4122C10.9691 12.7583 11.4342 12.8542 11.7802 12.6266C12.1263 12.3989 12.2222 11.9338 11.9946 11.5878L10.7414 12.4122ZM10.218 10.252L9.59143 10.6642L9.59144 10.6642L10.218 10.252ZM6.041 8L6.04102 7.25H6.041V8ZM5 7.25C4.58579 7.25 4.25 7.58579 4.25 8C4.25 8.41421 4.58579 8.75 5 8.75V7.25ZM17.5303 13.4697C17.2374 13.1768 16.7626 13.1768 16.4697 13.4697C16.1768 13.7626 16.1768 14.2374 16.4697 14.5303L17.5303 13.4697ZM18.4697 16.5303C18.7626 16.8232 19.2374 16.8232 19.5303 16.5303C19.8232 16.2374 19.8232 15.7626 19.5303 15.4697L18.4697 16.5303ZM19.5303 16.5303C19.8232 16.2374 19.8232 15.7626 19.5303 15.4697C19.2374 15.1768 18.7626 15.1768 18.4697 15.4697L19.5303 16.5303ZM16.4697 17.4697C16.1768 17.7626 16.1768 18.2374 16.4697 18.5303C16.7626 18.8232 17.2374 18.8232 17.5303 18.5303L16.4697 17.4697ZM17.5303 10.5303L19.5303 8.53033L18.4697 7.46967L16.4697 9.46967L17.5303 10.5303ZM19.5303 7.46967L17.5303 5.46967L16.4697 6.53033L18.4697 8.53033L19.5303 7.46967ZM19 7.25H16.7V8.75H19V7.25ZM16.7007 7.25C14.7638 7.24812 12.956 8.22159 11.8914 9.8398L13.1446 10.6642C13.9314 9.46813 15.2676 8.74861 16.6993 8.75L16.7007 7.25ZM11.8914 9.83979L10.7414 11.5878L11.9946 12.4122L13.1446 10.6642L11.8914 9.83979ZM10.7414 11.5878L9.59144 13.3358L10.8446 14.1602L11.9946 12.4122L10.7414 11.5878ZM9.59143 13.3358C8.80541 14.5306 7.47115 15.25 6.04098 15.25L6.04102 16.75C7.97596 16.7499 9.78113 15.7767 10.8446 14.1602L9.59143 13.3358ZM6.041 15.25H5V16.75H6.041V15.25ZM10.7414 12.4122L11.8914 14.1602L13.1446 13.3358L11.9946 11.5878L10.7414 12.4122ZM11.8914 14.1602C12.956 15.7784 14.7638 16.7519 16.7007 16.75L16.6993 15.25C15.2676 15.2514 13.9314 14.5319 13.1446 13.3358L11.8914 14.1602ZM16.7 16.75H19V15.25H16.7V16.75ZM11.9946 11.5878L10.8446 9.83979L9.59144 10.6642L10.7414 12.4122L11.9946 11.5878ZM10.8446 9.8398C9.78113 8.2233 7.97596 7.25005 6.04102 7.25L6.04098 8.75C7.47115 8.75004 8.80541 9.46939 9.59143 10.6642L10.8446 9.8398ZM6.041 7.25H5V8.75H6.041V7.25ZM16.4697 14.5303L18.4697 16.5303L19.5303 15.4697L17.5303 13.4697L16.4697 14.5303ZM18.4697 15.4697L16.4697 17.4697L17.5303 18.5303L19.5303 16.5303L18.4697 15.4697Z" />
-</svg> Shuffle <span className="hidden md:inline">Remaining Deck</span>
-        </button>
+          <svg className="transition-colors duration-300 ease-out" xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16.4697 9.46967C16.1768 9.76256 16.1768 10.2374 16.4697 10.5303C16.7626 10.8232 17.2374 10.8232 17.5303 10.5303L16.4697 9.46967ZM19.5303 8.53033C19.8232 8.23744 19.8232 7.76256 19.5303 7.46967C19.2374 7.17678 18.7626 7.17678 18.4697 7.46967L19.5303 8.53033ZM18.4697 8.53033C18.7626 8.82322 19.2374 8.82322 19.5303 8.53033C19.8232 8.23744 19.8232 7.76256 19.5303 7.46967L18.4697 8.53033ZM17.5303 5.46967C17.2374 5.17678 16.7626 5.17678 16.4697 5.46967C16.1768 5.76256 16.1768 6.23744 16.4697 6.53033L17.5303 5.46967ZM19 8.75C19.4142 8.75 19.75 8.41421 19.75 8C19.75 7.58579 19.4142 7.25 19 7.25V8.75ZM16.7 8L16.6993 8.75H16.7V8ZM12.518 10.252L13.1446 10.6642L13.1446 10.6642L12.518 10.252ZM10.7414 11.5878C10.5138 11.9338 10.6097 12.3989 10.9558 12.6266C11.3018 12.8542 11.7669 12.7583 11.9946 12.4122L10.7414 11.5878ZM11.9946 12.4122C12.2222 12.0662 12.1263 11.6011 11.7802 11.3734C11.4342 11.1458 10.9691 11.2417 10.7414 11.5878L11.9946 12.4122ZM10.218 13.748L9.59144 13.3358L9.59143 13.3358L10.218 13.748ZM6.041 16V16.75H6.04102L6.041 16ZM5 15.25C4.58579 15.25 4.25 15.5858 4.25 16C4.25 16.4142 4.58579 16.75 5 16.75V15.25ZM11.9946 11.5878C11.7669 11.2417 11.3018 11.1458 10.9558 11.3734C10.6097 11.6011 10.5138 12.0662 10.7414 12.4122L11.9946 11.5878ZM12.518 13.748L13.1446 13.3358L13.1446 13.3358L12.518 13.748ZM16.7 16V15.25H16.6993L16.7 16ZM19 16.75C19.4142 16.75 19.75 16.4142 19.75 16C19.75 15.5858 19.4142 15.25 19 15.25V16.75ZM10.7414 12.4122C10.9691 12.7583 11.4342 12.8542 11.7802 12.6266C12.1263 12.3989 12.2222 11.9338 11.9946 11.5878L10.7414 12.4122ZM10.218 10.252L9.59143 10.6642L9.59144 10.6642L10.218 10.252ZM6.041 8L6.04102 7.25H6.041V8ZM5 7.25C4.58579 7.25 4.25 7.58579 4.25 8C4.25 8.41421 4.58579 8.75 5 8.75V7.25ZM17.5303 13.4697C17.2374 13.1768 16.7626 13.1768 16.4697 13.4697C16.1768 13.7626 16.1768 14.2374 16.4697 14.5303L17.5303 13.4697ZM18.4697 16.5303C18.7626 16.8232 19.2374 16.8232 19.5303 16.5303C19.8232 16.2374 19.8232 15.7626 19.5303 15.4697L18.4697 16.5303ZM19.5303 16.5303C19.8232 16.2374 19.8232 15.7626 19.5303 15.4697C19.2374 15.1768 18.7626 15.1768 18.4697 15.4697L19.5303 16.5303ZM16.4697 17.4697C16.1768 17.7626 16.1768 18.2374 16.4697 18.5303C16.7626 18.8232 17.2374 18.8232 17.5303 18.5303L16.4697 17.4697ZM17.5303 10.5303L19.5303 8.53033L18.4697 7.46967L16.4697 9.46967L17.5303 10.5303ZM19.5303 7.46967L17.5303 5.46967L16.4697 6.53033L18.4697 8.53033L19.5303 7.46967ZM19 7.25H16.7V8.75H19V7.25ZM16.7007 7.25C14.7638 7.24812 12.956 8.22159 11.8914 9.8398L13.1446 10.6642C13.9314 9.46813 15.2676 8.74861 16.6993 8.75L16.7007 7.25ZM11.8914 9.83979L10.7414 11.5878L11.9946 12.4122L13.1446 10.6642L11.8914 9.83979ZM10.7414 11.5878L9.59144 13.3358L10.8446 14.1602L11.9946 12.4122L10.7414 11.5878ZM9.59143 13.3358C8.80541 14.5306 7.47115 15.25 6.04098 15.25L6.04102 16.75C7.97596 16.7499 9.78113 15.7767 10.8446 14.1602L9.59143 13.3358ZM6.041 15.25H5V16.75H6.041V15.25ZM10.7414 12.4122L11.8914 14.1602L13.1446 13.3358L11.9946 11.5878L10.7414 12.4122ZM11.8914 14.1602C12.956 15.7784 14.7638 16.7519 16.7007 16.75L16.6993 15.25C15.2676 15.2514 13.9314 14.5319 13.1446 13.3358L11.8914 14.1602ZM16.7 16.75H19V15.25H16.7V16.75ZM11.9946 11.5878L10.8446 9.83979L9.59144 10.6642L10.7414 12.4122L11.9946 11.5878ZM10.8446 9.8398C9.78113 8.2233 7.97596 7.25005 6.04102 7.25L6.04098 8.75C7.47115 8.75004 8.80541 9.46939 9.59143 10.6642L10.8446 9.8398ZM6.041 7.25H5V8.75H6.041V7.25ZM16.4697 14.5303L18.4697 16.5303L19.5303 15.4697L17.5303 13.4697L16.4697 14.5303ZM18.4697 15.4697L16.4697 17.4697L17.5303 18.5303L19.5303 16.5303L18.4697 15.4697Z" />
+          </svg> 
+          <span>Shuffle <span className="hidden md:inline">Remaining Deck</span></span>
+        </HoldButton>
       </div>
 
       <div className="relative flex items-center justify-center w-[288px] h-[403px] mx-auto [perspective:1000px]">
@@ -575,7 +615,7 @@ export default function DeckWorkout() {
 
       </div>
 
-      <div className={`absolute flex flex-col items-center gap-4 ${isRevealed && !isAnimatingOut ? 'bottom-[10%] opacity-100' : 'bottom-[5%] opacity-0 pointer-events-none'} transition-all duration-500 ease-out`}>
+      <div className={`absolute flex flex-col items-center gap-4 ${isRevealed && !isAnimatingOut ? 'bottom-[5%] opacity-100' : 'bottom-[0%] opacity-0 pointer-events-none'} transition-all duration-500 ease-out`}>
         <p className="sans-serif text-xl font-bold text-white uppercase tracking-widest">
           {rankToNum(cards.current[cardIndex].rank)} {suitToExercise(cards.current[cardIndex].suit)}
         </p>
