@@ -567,7 +567,7 @@ export default function DeckWorkout() {
                 : 'translate(0px, 0px) rotateZ(0deg) scale(0.8333)'
             }}
           >
-            <div className="absolute inset-0 w-full h-full shadow-xl">
+            <div className="absolute inset-0 w-full h-full ">
               {generateCardBackSvg()}
             </div>
           </div>
