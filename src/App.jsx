@@ -25,30 +25,33 @@ const generateInitialDeck = () => {
 };
 
 const clusteringIndex = (repsList) => {
-  const positions = [];
-  for (let i = 0; i < repsList.length; i++) {
-    if (repsList[i] >= 10 && repsList[i] <= 14) {
-      positions.push(i);
+  const n = repsList.length;
+  if (n === 0) return 0;
+
+  const alpha = 0.2; 
+  
+  let currentFatigue = 0;
+
+  for (let i = 0; i < n; i++) {
+    const cardValue = repsList[i];
+    
+
+    // map 2-14 to 0-12
+    const intensity = Math.max(0, (cardValue - 2) * (10 / 12)); 
+    
+    if (i === 0) {
+      currentFatigue = intensity;
+    } else {
+      // ema
+      currentFatigue = (intensity * alpha) + (currentFatigue * (1 - alpha));
     }
   }
-  if (positions.length < 2) {
-    return 0;
-  }
 
-  let totalGap = 0;
-  for (let i = 0; i < positions.length - 1; i++) {
-    totalGap += (positions[i + 1] - positions[i]);
-  }
-  const averageGap = totalGap / (positions.length - 1);
+  // normalize to 0-100 range
+  const maxExpectedFatigue = 10; 
+  let score = (currentFatigue / maxExpectedFatigue) * 100;
+  return Math.round(Math.max(0, Math.min(100, score)) * 10) / 10;
 
-  const minGap = 1.0;
-  const maxGap = 51 / (positions.length - 1); 
-
-
-  let score = (1 - (averageGap - minGap) / (maxGap - minGap)) * 100;
-
-  score = Math.max(0, Math.min(100, score));
-  return Math.round(score * 100) / 100;
 };
 
 
@@ -62,6 +65,12 @@ export default function DeckWorkout() {
   const [updateTrigger, setUpdateTrigger] = useState(0);
   const [statsOpen, setStatsOpen] = useState(false);
   const [expandedStat, setExpandedStat] = useState(null);
+  const [isRewinding, setIsRewinding] = useState(false);
+  const [rewindTrigger, setRewindTrigger] = useState(false);
+
+  const [isShuffling, setIsShuffling] = useState(false);
+  const [shufflePhase, setShufflePhase] = useState(0);
+  const shuffleVectors = useRef([]);
 
   const lastRevealTime = useRef(null);
 
@@ -96,13 +105,46 @@ export default function DeckWorkout() {
   }
 
   const handleShuffleRemaining = () => {
-    const remaining = cards.current.slice(cardIndex);
-    for (let i = remaining.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
-    }
-    cards.current = [...cards.current.slice(0, cardIndex), ...remaining];
-    setUpdateTrigger(prev => prev + 1);
+    if (isShuffling || isAnimatingOut) return;
+    
+    const remainingCount = deckLength - cardIndex;
+    if (remainingCount <= 1) return;
+
+    const visualCount = Math.min(remainingCount, 12);
+    
+    shuffleVectors.current = Array.from({ length: visualCount }).map(() => {
+      const signX = Math.random() > 0.5 ? 1 : -1;
+      const x = signX * (60 + Math.random() * 60); 
+      const y = (Math.random() - 0.5) * 60;
+      const rot = (Math.random() - 0.5) * 45;
+      return `translate(${x}px, ${y}px) rotateZ(${rot}deg) scale(0.8333)`;
+    });
+
+    setIsShuffling(true);
+    
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setShufflePhase(1);
+      });
+    });
+
+    setTimeout(() => {
+      const remaining = cards.current.slice(cardIndex);
+      for (let i = remaining.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
+      }
+      cards.current = [...cards.current.slice(0, cardIndex), ...remaining];
+      setUpdateTrigger(prev => prev + 1);
+      setIsRevealed(false);
+      
+      setShufflePhase(2);
+    }, 400);
+
+    setTimeout(() => {
+      setIsShuffling(false);
+      setShufflePhase(0);
+    }, 800);
   };
 
   useEffect(() => {
@@ -138,23 +180,35 @@ export default function DeckWorkout() {
   };
 
   const handleRestart = () => {
-    setCardIndex(0);
+    
+
+    const visualCardCount = Math.min(cardIndex, 12);
+    const animationDuration = 500 + (visualCardCount * 40);
+
+    setIsRewinding(true);
     setIsRevealed(false);
     setIsAnimatingOut(false);
-    setActiveTimes([]);
-    setReps([]);
-    setExercisesDone([]);
-    lastRevealTime.current = null;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setRewindTrigger(true);
+      });
+    });
+
+    setTimeout(() => {
+      setCardIndex(0);
+      setActiveTimes([]);
+      setReps([]);
+      setIsRewinding(false);
+      setRewindTrigger(false);
+      setExercisesDone([]);
+      lastRevealTime.current = null;
+    }, animationDuration)
 
   };
-  // if (isComplete) {
-  //   return (
-      
-  //   );
-  // }
 
   return (
-    <div className="w-screen h-screen overflow-hidden flex flex-col items-center justify-center bg-neutral-900 relative">
+    <div className="w-screen h-screen overflow-x-hidden flex flex-col items-center justify-center bg-neutral-900 relative">
 
       {isComplete && !statsOpen ? <div className="w-screen h-screen p-8 flex flex-col items-center justify-center bg-[#171717] text-white overflow-hidden">
         <h1 className="text-4xl font-light text-center tracking-widest uppercase mb-6 text-[#e0e0e0]">Session Complete</h1>
@@ -197,7 +251,7 @@ export default function DeckWorkout() {
         </svg>
       </button>
 
-      <div className={`absolute overflow-y-scroll inset-0 bg-neutral-900/95 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-all duration-300 ${statsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+      <div className={`absolute overflow-y-scroll inset-0 bg-neutral-900/95 backdrop-blur-sm z-[100] flex flex-col items-center justify-center py-4 transition-all duration-300 ${statsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         {!expandedStat ? (
           <>
           <h2 className="text-3xl font-light tracking-widest uppercase mb-10 text-white">Statistics</h2>
@@ -250,7 +304,13 @@ export default function DeckWorkout() {
             Close
           </button>
         </>
-        ) : (<>
+        ) : (<div className="px-4 w-full flex flex-col items-center">
+          <h2 className="text-4xl font-bold tracking-widest uppercase mb-2 text-white">
+            {expandedStat === 'totalReps' && `${reps.length == 0 ? 0 : reps.reduce((a, b) => a + b)}`}
+            {expandedStat === 'difficultyIndex' && `${clusteringIndex(reps)}`}
+            {expandedStat === 'secPerCard' && `${activeTimes.length == 0 ? "-" : ((activeTimes.reduce((a, b) => a + b) / activeTimes.length) / 1000).toFixed(2)}`}
+            {expandedStat === 'secActive' && 'Work Intensity'}
+          </h2>
           <h2 className="text-2xl font-light tracking-widest uppercase mb-6 text-white">
             {expandedStat === 'totalReps' && 'Cumulative Reps'}
             {expandedStat === 'difficultyIndex' && 'Difficulty Index'}
@@ -258,15 +318,19 @@ export default function DeckWorkout() {
             {expandedStat === 'secActive' && 'Work Intensity'}
           </h2>
 
+
+
           <p className="text-sm font-light tracking-widest text-neutral-400 text-center mb-6 ">
             {expandedStat === "totalReps" && "Track the total reps completed as you progress through the deck."}
-            {expandedStat === "secPerCard" && "How many seconds are you spending per card?"}
-            {expandedStat === "difficultyIndex" && "How hard was this set of cards? A higher index value means more high-rep cards came your way quickly"}
+            {expandedStat === "secPerCard" && "Track the seconds you spend per card."}
+            {expandedStat === "difficultyIndex" && "Track the difficulty of this card order. A higher index value high-rep cards were grouped together."}
           </p>
     
-          <div className="w-[90%] max-w-md h-64 bg-neutral-800/40 border border-neutral-700/50 rounded-xl flex items-center justify-center mb-8">
+          <div className="w-full max-w-md h-64 bg-neutral-800/40 border border-neutral-700/50 rounded-xl flex items-center justify-center mb-8">
           <ResponsiveContainer width="100%" height="100%">
             {expandedStat === "totalReps" && <LineChart
+            responsive
+            
               style={{ fontFamily: "monospace", fontWeight: "300" }}
               data={reps.map((x, i) => ({
                 ind: i, 
@@ -280,16 +344,20 @@ export default function DeckWorkout() {
                 tick={false} 
                 label={{ value: `${activeTimes.length} Cards Completed`, position: "insideBottom", fill: "#737373", offset: 0 }} 
               />
-              <YAxis stroke="#737373" tick={true} width={20}/>
+              <YAxis stroke="#737373" tick={true} width="auto"/>
               <Line
                 type="linear"
                 dataKey="val"
                 stroke="red"
                 dot={{ fill: 'red' }}
-                isAnimationActive={false}
+                isAnimationActive={true}
+                animationBegin={100}
+                animationDuration={1200}
+                animationEasing="ease-out"
               />
             </LineChart>}
             {expandedStat === "secPerCard" && <LineChart
+            responsive
               style={{ fontFamily: "monospace", fontWeight: "300" }}
               data={activeTimes.map((x, i) => ({
                 ind: i, 
@@ -303,17 +371,21 @@ export default function DeckWorkout() {
                 tick={false} 
                 label={{ value: `${activeTimes.length} Cards Completed`, position: "insideBottom", fill: "#737373", offset: 0 }} 
               />
-              <YAxis stroke="#737373" tick={true} width={20} />
+              <YAxis stroke="#737373" tick={true} width="auto"/>
               <Line
                 type="linear"
                 dataKey="val"
                 stroke="red"
                 dot={{ fill: 'red' }}
-                isAnimationActive={false}
+                isAnimationActive={true}
+                animationEasing="ease-out"
+                animationBegin={100}
+                animationDuration={1200}
               />
             </LineChart>}
             {
               expandedStat === "difficultyIndex" && <LineChart
+              responsive
               style={{ fontFamily: "monospace", fontWeight: "300" }}
               data={reps.map((x, i) => ({
                 ind: i, 
@@ -327,28 +399,35 @@ export default function DeckWorkout() {
                 tick={false} 
                 label={{ value: `${activeTimes.length} Cards Completed`, position: "insideBottom", fill: "#737373", offset: 0 }} 
               />
-              <YAxis stroke="#737373" tick={true} width={20} />
+              <YAxis stroke="#737373" tick={true} width="auto" />
               <Line
                 type="linear"
                 dataKey="val"
                 stroke="red"
                 dot={{ fill: 'red' }}
-                isAnimationActive={false}
+                isAnimationActive={true}
+                animationEasing="ease-out"
+                animationBegin={100}
+                animationDuration={1200}
               />
             </LineChart>}
           </ResponsiveContainer>
           </div>
           {expandedStat === "totalReps" && (
-            <div className="w-full max-w-sm flex flex-col gap-3 mt-4 px-6 mb-8">
+            <div className="w-full max-w-sm grid grid-cols-2 gap-4 mt-4 px-6 mb-8">
               {Object.entries(
                 exercisesDone.reduce((acc, exercise, i) => {
-                  acc[exercise] = (acc[exercise] || 0) + reps[i];
+                  acc[exercise] += reps[i];
                   return acc;
-                }, {})
+                }, 
+                Object.values(exercises).reduce((base, exName) => {
+                  base[exName] = 0;
+                  return base;
+                }, {}))
               ).map(([exerciseName, totalReps]) => (
-                <div key={exerciseName} className="flex justify-between items-center bg-neutral-800/40 border border-neutral-700/50 p-4 rounded-xl">
-                  <span className="text-neutral-400 text-xs tracking-widest uppercase">{exerciseName}</span>
-                  <span className="text-white text-xl font-light">{totalReps}</span>
+                <div key={exerciseName} className="flex flex-col items-center justify-center bg-neutral-800/40 border border-neutral-700/50 p-3 rounded-xl">
+                  <span className="text-white text-3xl font-light mb-2">{totalReps}</span>
+                  <span className="text-neutral-400 text-[10px] tracking-widest uppercase text-center">{exerciseName}</span>
                 </div>
               ))}
             </div>
@@ -360,7 +439,7 @@ export default function DeckWorkout() {
           >
             Back
           </button>
-        </>)}
+        </div>)}
 
       </div>
       <div className={`absolute inset-0 bg-neutral-900/95 backdrop-blur-sm z-[100] flex flex-col items-center justify-center transition-all duration-300 ${settingsOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
@@ -453,6 +532,46 @@ export default function DeckWorkout() {
             {generateCardSvg(cards.current[cardIndex].rank, cards.current[cardIndex].suit)}
           </div>
         </div>
+        {isRewinding && Array.from({ length: Math.min(cardIndex, 12) }).map((_, i) => {
+          const delay = i * 40;
+          const sourceCardIndex = cardIndex - 1 - i;
+          
+          return (
+            <div 
+              key={`rewind-${i}`}
+              style={{ transitionDelay: `${delay}ms` }}
+              className={`absolute top-0 left-0 w-full h-full z-[30] pointer-events-none transition-all duration-500 ease-in-out [transform-style:preserve-3d] ${
+                rewindTrigger 
+                  ? '[transform:rotateY(0deg)_scale(0.8333)_translate(0,0)_rotateZ(0deg)] opacity-100 shadow-md' 
+                  : '[transform:rotateY(180deg)_scale(1)_translate(150%,-3rem)_rotateZ(15deg)] opacity-0'
+              }`}
+            >
+              <div className="absolute inset-0 w-full h-full [backface-visibility:hidden]">
+                {generateCardBackSvg()}
+              </div>
+
+              <div className="absolute inset-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)] bg-[#1a1a1a] rounded-xl overflow-hidden shadow-2xl">
+                {sourceCardIndex >= 0 && generateCardSvg(cards.current[sourceCardIndex].rank, cards.current[sourceCardIndex].suit)}
+              </div>
+            </div>
+          );
+        })}
+
+        {isShuffling && Array.from({ length: Math.min(deckLength - cardIndex, 12) }).map((_, i) => (
+          <div 
+            key={`shuffle-${i}`}
+            className="absolute top-0 left-0 w-full h-full z-[40] pointer-events-none transition-transform duration-[400ms] ease-in-out [transform-style:preserve-3d]"
+            style={{ 
+              transform: shufflePhase === 1 
+                ? shuffleVectors.current[i] 
+                : 'translate(0px, 0px) rotateZ(0deg) scale(0.8333)'
+            }}
+          >
+            <div className="absolute inset-0 w-full h-full shadow-xl">
+              {generateCardBackSvg()}
+            </div>
+          </div>
+        ))}
 
       </div>
 
