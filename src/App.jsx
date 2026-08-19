@@ -208,7 +208,7 @@ export default function DeckWorkout() {
   };
 
   return (
-    <div className="w-screen h-screen overflow-hidden  flex flex-col items-center justify-center bg-neutral-900 relative">
+    <div className="w-screen h-screen overflow-hidden overflow-x-hidden flex flex-col items-center justify-center bg-neutral-900 relative">
 
       {isComplete && !statsOpen ? <div className="w-screen h-screen p-8 flex flex-col items-center justify-center bg-[#171717] text-white overflow-hidden">
         <h1 className="text-4xl font-light text-center tracking-widest uppercase mb-6 text-[#e0e0e0]">Session Complete</h1>
